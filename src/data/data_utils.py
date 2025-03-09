@@ -1,5 +1,8 @@
-from typing import Dict
+from typing import Dict, List, Tuple
 import numpy as np
+import torch
+from torch.utils.data import Dataset
+from transformers import PreTrainedTokenizer
 import networkx as nx
 from networkx.algorithms import tree
 
@@ -8,9 +11,11 @@ class Solution:
     def __init__(self, **kwargs):
         pass
 
+    # return the objective function values associated with the solution
     def evaluate(self) -> Dict[str, float]:
         pass
 
+    # get the LLM response string from the solution object
     def get_response_string_from_solution(self) -> str:
         pass
 
@@ -31,6 +36,9 @@ class DataPoint:
     def parse_to_solution(self, solution: str) -> Solution:
         pass
 
+    def generate_random_feasible_solution(self) -> str:
+        pass
+
 
     # generate finetuning data from a sample of responses
     def generate_ft_data(self, samples: List[str]) -> List[Dict[str, str]]:
@@ -47,6 +55,34 @@ class DataPoint:
         return data
 
 
+class CustomDataset(torch.utils.data.Dataset):
+
+  def __init__(self, tokenizer: PreTrainedTokenizer, ft_dataset: List[Dict[str, str]], max_length: int = 768):
+
+    super().__init__()
+
+    self.max_length = max_length
+    self.n = len(ft_dataset)
+
+    self.input_ids = []
+    self.attn_masks = []
+
+    for data_point in ft_dataset:
+
+      encodings_dict = tokenizer('<|startoftext|>'+ data_point['query'] + "\n" + data_point['response'] + '<|endoftext|>',
+                                 truncation=True, max_length=max_length, padding="max_length")
+
+      self.input_ids.append(torch.tensor(encodings_dict['input_ids']))
+      self.attn_masks.append(torch.tensor(encodings_dict['attention_mask']))
+
+
+  def __len__(self):
+    return self.n
+
+  def __getitem__(self, idx):
+    return self.input_ids[idx], self.attn_masks[idx]
+
+
 
 ### ------------------ Class defs for the clustering problem ------------------ ###
 COLORS = ["red", "blue", "green"]
@@ -55,7 +91,7 @@ class ClusteringSolution(Solution):
 
     def __init__(self, **kwargs):
         super.__init__(**kwargs)
-        self.is_valid = kwargs.get("is_valid", True)
+        self.is_valid = kwargs.get("is_valid", False)
         self.total_cost = kwargs.get("total_cost", np.inf)
         self.total_color_violation = kwargs.get("total_color_violation", np.inf)
         self.clusters = kwargs.get("clusters", [])
@@ -309,16 +345,17 @@ class MSTSolution(Solution):
 
     def __init__(self, **kwargs):
         super.__init__(**kwargs)
+        self.is_valid = kwargs.get("is_valid", False)
         self.total_cost = kwargs.get("total_cost", np.inf)
         self.total_deg_violation = kwargs.get("total_deg_violation", np.inf)
         self.edges = kwargs.get("edges", [])
 
     def get_response_string_from_solution(self) -> str:
-    response = ""
-    for a,b in self.edges:
-        response += f"({a}, {b})\n"
-    response = response.strip("\n")
-    return respnonse
+        response = ""
+        for a,b in self.edges:
+            response += f"({a}, {b})\n"
+        response = response.strip("\n")
+        return respnonse
 
     def evaluate(self) -> Dict[str, float]:
         return {"total_cost": self.total_cost, "total_deg_violation": self.total_deg_violation}
@@ -442,13 +479,13 @@ class MSTDataPoint(DataPoint):
         data["query"] = self.convert_to_prompt()
         data["response"] = ""
         for a,b in forest:
-        if (a,b) not in self.edges and (b,a) in self.edges:
-            data["response"] += f"({b}, {a})\n"
-        elif (a,b) in self.edges:
-            data["response"] += f"({a}, {b})\n"
+            if (a,b) not in self.edges and (b,a) in self.edges:
+                data["response"] += f"({b}, {a})\n"
+            elif (a,b) in self.edges:
+                data["response"] += f"({a}, {b})\n"
         data["response"] = data["response"].strip("\n")
 
-    return data
+        return data
 
     def get_mst_degree_profile(self, mst: List[Tuple[int, int]]) -> List[int]:
         degrees = {}
@@ -517,7 +554,7 @@ class MSTDataPoint(DataPoint):
         deg_profile = self.get_mst_degree_profile(forest)
         num_violation = np.sum(np.array(deg_profile) > self.deg)
         num_cc = self.get_num_connected_components(forest)
-        return MSTSolution({"edges": forest, "total_cost": num_cc-1, "total_deg_violation": num_violation})
+        return MSTSolution({"is_valid": True, "edges": forest, "total_cost": num_cc-1, "total_deg_violation": num_violation})
 
 
 ### ------------------ Class defs for the minimum spanning tree (MST) problem ------------------ ###
@@ -526,6 +563,7 @@ class LineSchedulingSolution(Solution):
 
     def __init__(self, **kwargs):
         super.__init__(**kwargs)
+        self.is_valid = kwargs.get("is_valid", False)
         self.total_cost = kwargs.get("total_cost", np.inf)
         self.total_box_violation = kwargs.get("total_box_violation", np.inf)
         self.visit_times = kwargs.get("visit_times", [])
@@ -637,15 +675,15 @@ class LineSchedulingDataPoint(DataPoint):
         # Truncate values larger to satisy box constraints upper range
         visit_times = []
         for e in output_str.split("\n"):
-        try:
-            float_val = int(e)
-        except ValueError:
-            float_val = 0
-        visit_times.append(min(float_val,self.box_constraint_range[1]))
+            try:
+                float_val = int(e)
+            except ValueError:
+                float_val = 0
+            visit_times.append(min(float_val,self.box_constraint_range[1]))
 
         visit_times = visit_times[:self.num_points]
         box_violation = self.compute_box_violation(visit_times)
         total_cost = self.compute_total_wait_time(visit_times)
 
-        return LineSchedulingSolution({"total_cost": total_cost, "total_box_violation": total_box_violation, "visit_times": visit_times})
+        return LineSchedulingSolution({"is_valid": True, "total_cost": total_cost, "total_box_violation": total_box_violation, "visit_times": visit_times})
 
