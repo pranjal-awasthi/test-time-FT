@@ -1,5 +1,6 @@
 from typing import Dict, List, Tuple
 import numpy as np
+import cvxpy as cp
 import torch
 from torch.utils.data import Dataset
 from transformers import PreTrainedTokenizer
@@ -336,6 +337,49 @@ class ClusteringDataPoint(DataPoint):
 
       return data
 
+    def generate_random_feasible_solution(self) -> str:
+        full_clusters = []
+
+        for i in range(self.num_points):
+            for j in range(self.num_points):
+                if i != j and ((i,j,1) in self.dist or (j,i,1) in self.dist):
+                    full_clusters.append([i, j])
+                    full_clusters.append([j, i])
+                elif i != j and self.colors[i] != self.colors[j]:
+                    full_clusters.append([i, j])
+                    full_clusters.append([j, i])
+
+        while True:
+            try:
+                np.random.shuffle(full_clusters)
+                covered = {}
+                num_covered = 0
+                clusters = []
+                curr_index = 0
+                while num_covered < self.num_points:
+                    i,j = full_clusters[curr_index]
+                    if i not in covered and j not in covered:
+                        clusters.append([i,j])
+                        covered[i]=1
+                        covered[j]=1
+                        num_covered += 2
+                    curr_index += 1
+
+                break
+            except:
+                continue
+
+        curr_index = 0
+        response = ""
+        for index in range(len(COLORS)):
+            response += f"{COLORS[index]} clusters: "
+            for i in range(index*self.num_points//6,(index+1)*self.num_points//6):
+                response += f"""{clusters[curr_index][0]} {clusters[curr_index][1]} """
+                curr_index += 1
+
+        response = response.strip() + "\n"
+
+        return response
 
 
 
@@ -486,6 +530,19 @@ class MSTDataPoint(DataPoint):
         data["response"] = data["response"].strip("\n")
 
         return data
+
+    def generate_random_feasible_solution(self) -> str:
+
+        mst = self.generate_random_mst()
+        response = ""
+        for a,b in mst:
+            if (a,b) not in self.edges and (b,a) in self.edges:
+                response += f"({b}, {a})\n"
+            elif (a,b) in self.edges:
+                response += f"({a}, {b})\n"
+
+        return response.strip("\n")
+
 
     def get_mst_degree_profile(self, mst: List[Tuple[int, int]]) -> List[int]:
         degrees = {}
@@ -687,3 +744,56 @@ class LineSchedulingDataPoint(DataPoint):
 
         return LineSchedulingSolution({"is_valid": True, "total_cost": total_cost, "total_box_violation": total_box_violation, "visit_times": visit_times})
 
+
+    def convex_projection(self, visit_durations: List[float]) -> List[float]:
+        # Define non-negative variables
+        x = cp.Variable(n, nonneg=True)
+        w = cp.Variable(n, nonneg=True)
+        y = cp.Variable(n, nonneg=True)
+        u = cp.Variable(n, nonneg=True)
+
+
+        t = self.travel_times
+        o = self.opening_times
+        D = 2 * self.opening_times[-1] + self.box_constraints[-1][1]
+        v = visit_durations
+        V = 1
+
+        # Constraints
+        constraints = []
+        # 2. y_0 = 0
+        constraints.append(y[0] == 0)
+        # 3. w_0 = o_0
+        constraints.append(w[0] == o[0])
+        # 4. w_i >= o_i - y_i for i in {1, 2, ..., n-1}
+        for i in range(1, self.num_points):
+            constraints.append(w[i] >= o[i] - y[i])
+        # 5. y_i = y_{i-1} + w_{i-1} + x_{i-1} + t[i-1] for i in {1, 2, ..., n-1}
+        for i in range(1, self.num_points):
+            constraints.append(y[i] == y[i-1] + w[i-1] + x[i-1] + t[i-1])
+        # 6. \sum_{i=0}^{n-1} w_i <= V
+        constraints.append(cp.sum(w) <= V)
+        # 7. x_i <= L for i in {0, 1, ..., n-1}
+        constraints.extend([x[i] <= L for i in range(self.num_points)])
+        # 8. y_{n-1} + x[n-1] <= D
+        constraints.append(y[n-1] + w[n-1] + x[n-1] <= D)
+
+        for i in range(n):
+            constraints.append(u[i] >= x[i] - v[i])
+            constraints.append(u[i] >= v[i] - x[i])
+
+        # Projection objective
+        objective = cp.Minimize(cp.sum(u))
+
+        # Define and solve the problem
+        problem = cp.Problem(objective, constraints)
+        problem.solve()
+
+        x_proj = x.value
+
+        response = ""
+        for val in x_proj:
+            response_0 += f"{min(20,round(val))}\n"
+        response = response.strip("\n")
+
+        return response
