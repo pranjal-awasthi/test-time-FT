@@ -40,20 +40,9 @@ class DataPoint:
     def generate_random_feasible_solution(self) -> str:
         pass
 
+    def generate_random_ft_data_point(self) -> Dict[str, str]:
+        pass
 
-    # generate finetuning data from a sample of responses
-    def generate_ft_data(self, samples: List[str]) -> List[Dict[str, str]]:
-        data = []
-        prompt = self.convert_to_prompt()
-        for sample in samples:
-            inner_dict = {}
-            solution = self.parse_to_solution(sample)
-            response = solution.get_response_string_from_solution()
-            inner_dict["query"] = prompt
-            inner_dict["response"] = response
-            data.append(inner_dict)
-
-        return data
 
 
 class CustomDataset(torch.utils.data.Dataset):
@@ -745,6 +734,24 @@ class LineSchedulingDataPoint(DataPoint):
         return LineSchedulingSolution({"is_valid": True, "total_cost": total_cost, "total_box_violation": total_box_violation, "visit_times": visit_times})
 
 
+    def generate_random_ft_data_point(self) -> Dict[str, str]:
+
+        query = self.convert_to_prompt()
+        data = {}
+        data["query"] = query
+        response = ""
+        for i in range(len(self.box_constraints)):
+            min_val = self.box_constraints[i][0]
+            max_val = self.box_constraints[i][1]
+
+            response += f"{np.random.randint(min_val, max_val+1)}\n"
+
+        response = response.strip("\n")
+        data["response"] = response
+
+        return data
+
+
     def convex_projection(self, visit_durations: List[float]) -> List[float]:
         # Define non-negative variables
         x = cp.Variable(n, nonneg=True)
@@ -793,7 +800,7 @@ class LineSchedulingDataPoint(DataPoint):
 
         response = ""
         for val in x_proj:
-            response_0 += f"{min(20,round(val))}\n"
+            response_0 += f"{min(self.box_constraint_range[1],round(val))}\n"
         response = response.strip("\n")
 
         return response

@@ -75,7 +75,8 @@ def top_ift(instance: DataPoint, model: PreTrainedModel, tokenizer: PreTrainedTo
         indices = np.argsort([s.evaluate["total_cost"] for s in samples])
 
         ft_dataset = []
-        for j in range(m):
+        # we select the best m+1 since one of the points will be used as validation set
+        for j in range(m+1):
             ft_dataset.append({"query": query, "response": samples[indices[j]].get_response_string_from_solution()})
 
         custom_dataset = CustomDataset(tokenizer, ft_dataset, max_length)

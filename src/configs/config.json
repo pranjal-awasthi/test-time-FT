@@ -1,0 +1,127 @@
+{
+    "model_name": "gpt2",
+    "model_dir": "",
+    "experiment_dir": "./",
+    "problem": "clustering",
+    "algorithm": "all",
+
+    "tokenizer_params" : {
+
+        "clustering": {
+            "max_length": 1024
+        },
+        "mst": {
+            "max_length": 1024
+        },
+        "line_scheduling": {
+            "max_length": 1024
+        }
+
+    },
+
+    "problem_params" : {
+
+        "clustering": {
+            "num_points": 24,
+            "r": 10,
+            "num_test_points": 50
+        },
+        "mst": {
+            "num_lines": 4,
+            "prob": 0.4,
+            "deg": 2,
+            "num_test_points": 50
+        },
+        "line_scheduling": {
+            "num_points": 10,
+            "travel_time_range": [1,20],
+            "box_constraint_range": [1,20],
+            "num_test_points": 50
+        }
+
+    },
+
+    "it_params": {
+
+        "clustering": {
+            "epochs": 6,
+            "max_length": 1024,
+            "num_samples": 1024,
+            "batch_size": 2,
+            "learning_rate": 2e-5
+        },
+
+        "mst": {
+            "epochs": 3,
+            "max_length": 1024,
+            "num_samples": 1024,
+            "batch_size": 2,
+            "learning_rate": 2e-5
+        },
+
+        "line_scheduling": {
+            "epochs": 3,
+            "num_samples": 2000,    
+            "max_length": 1024,
+            "batch_size": 2,
+            "learning_rate": 2e-5
+        }
+
+    },
+
+    "alg_params": {
+
+        "best_of_llm": {
+            "clustering": {
+                "num_to_sample": 1920
+            },
+            "mst": {
+                "num_to_sample": 600
+            },
+            "line_scheduling": {
+                "num_to_sample": 384
+            }
+        },
+
+        "best_of_alg": {
+            "clustering": {
+                "num_to_sample": 1920
+            },
+            "mst": {
+                "num_to_sample": 600
+            },
+            "line_scheduling": {
+                "num_to_sample": 384
+            }
+        },
+
+        "top_ift": {
+            "clustering": {
+                "m": 4,
+                "M": 40,
+                "Q": 12,
+                "batch_size": 2,
+                "epochs": 3,
+                "learning_rate": 2e-5
+            },
+            "mst": {
+                "m": 4,
+                "M": 50,
+                "Q": 3,
+                "batch_size": 2,
+                "epochs": 3,
+                "learning_rate": 2e-5
+            },
+            "line_scheduling": {
+                "m": 4,
+                "M": 40,
+                "Q": 12,
+                "batch_size": 2,
+                "epochs": 3,
+                "learning_rate": 2e-5
+            }
+        }
+    }
+
+
+}
