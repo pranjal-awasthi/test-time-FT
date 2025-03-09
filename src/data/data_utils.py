@@ -11,6 +11,9 @@ class Solution:
     def evaluate(self) -> Dict[str, float]:
         pass
 
+    def get_response_string_from_solution(self) -> str:
+        pass
+
 # generic class for describing a data point for an optimization problem
 class DataPoint:
     def __init__(self, **kwargs):
@@ -28,8 +31,6 @@ class DataPoint:
     def parse_to_solution(self, solution: str) -> Solution:
         pass
 
-    def get_response_string_from_solution(self) -> str:
-        pass
 
     # generate finetuning data from a sample of responses
     def generate_ft_data(self, samples: List[str]) -> List[Dict[str, str]]:
@@ -312,7 +313,7 @@ class MSTSolution(Solution):
         self.total_deg_violation = kwargs.get("total_deg_violation", np.inf)
         self.edges = kwargs.get("edges", [])
 
-    def get_response_string_from_clusters(self) -> str:
+    def get_response_string_from_solution(self) -> str:
     response = ""
     for a,b in self.edges:
         response += f"({a}, {b})\n"
@@ -529,7 +530,7 @@ class LineSchedulingSolution(Solution):
         self.total_box_violation = kwargs.get("total_box_violation", np.inf)
         self.visit_times = kwargs.get("visit_times", [])
 
-    def get_response_string_from_clusters(self) -> str:
+    def get_response_string_from_solution(self) -> str:
         response = ""
         for t in self.visit_times:
             response += f"{t}\n"
@@ -542,3 +543,109 @@ class LineSchedulingSolution(Solution):
 class LineSchedulingDataPoint(DataPoint):
     def __init__(self, **kwargs):
         super.__init__(**kwargs)
+        self.num_points = kwargs.get("num_points", 7)
+        self.travel_time_range = kwargs.get("travel_time_range", [1,20])
+        self.box_constraint_range = kwargs.get("box_constraint_range", [1,20])
+        self.box_constraints = []
+        self.travel_times = []
+        self.opening_times = []
+
+    def generate(self):
+
+        for j in range(self.num_points):
+            visit_durations = np.random.randint(self.box_constraint_range[0], self.box_constraint_range[1], size=2)
+            self.box_constraints.append(np.sort(visit_durations))
+
+
+        self.travel_times = np.random.randint(self.travel_time_range[0], self.travel_time_range[1], size=n-1)
+        self.opening_times = [0]
+
+        # pick opening time such that you need to visit each location for the maximum amount to avoid waiting
+        for j in range(1,self.num_points):
+            self.opening_times.append(self.opening_times[j-1] + self.box_constraints[j-1][1] + self.travel_times[j-1])
+
+    # given visit durations compute the total wait time
+    def compute_total_wait_time(self, visit_durations: List[float]) -> float:
+        wait_time = 0.0
+        curr_time = 0.0
+
+        if(len(visit_durations) < self.num_points):
+            visit_durations += [0]*(self.num_points-len(visit_durations))
+
+        for i in range(self.num_points):
+            wait_time += max(0, self.opening_times[i] - curr_time)
+            curr_time += max(0, self.opening_times[i] - curr_time) + visit_durations[i]
+            if i < self.num_points-1:
+                curr_time += self.travel_times[i]
+        return wait_time
+
+    # given visit durations compute total box costraint violation
+    def compute_box_violation(data_point, visit_durations):
+        box_violation = 0.0
+
+        if(len(visit_durations) < self.num_points):
+            visit_durations += [0]*(self.num_points-len(visit_durations))
+
+        for i in range(self.num_points):
+            if visit_durations[i] > self.box_constraints[i][1]:
+                box_violation += visit_durations[i] - self.box_constraints[i][1]
+            elif visit_durations[i] < self.box_constraints[i][0]:
+                box_violation +=  self.box_constraints[i][0] - visit_durations[i]
+
+        return box_violation
+
+    def convert_to_prompt(self) -> str:
+        n = self.num_points
+        m = n-1
+
+        prompt = f"""
+            There are {n} museums on a line. They are numbered from 0 to {m}.
+            I'm currently located at museum 0 and the current timestamp is 0.
+            I want to visit all these museums one by one in a sequence. Each museum has an opening time.
+            If I reach a particular museum before it opens then I may have to wait. The opening times for the museums are as follows:[
+            """
+        for i in self.opening_times:
+            prompt += f"{int(i)}, "
+
+        prompt += "]. "
+
+        prompt += f"""In addition, the following list of {m} numbers contains the time to travel from museum i to i+1.
+        So the first number is the time to travel from 0 to 1 and so on: ["""
+
+        for i in self.travel_times:
+            prompt += f"{int(i)}, "
+
+        prompt += "]. "
+
+
+        prompt += """Finally, I have certain constraints in terms of the minimum and maximum amount of time I want to visit each museum.
+        This is described as the following list of arrays: ["""
+
+        for i in self.box_constraints:
+            prompt += f"""[{int(i[0])}, {int(i[1])}], """
+        prompt += "]. "
+
+        prompt += f"""Give me a schedule in terms of a list of {n} numbers
+        describing how much time I should spend at each place so that all my constraints are satisfied and at the same time
+        my total wait time is as little as possible. Do not use code. Simply output the list of {n} numbers (one per line) and nothing else."""
+
+        return prompt        
+
+
+    def parse_to_solution(self, response: str) -> Solution:
+        output_str = response.split("nothing else.\n")[-1].split("<|endoftext|>")[0]
+        # Truncate values larger to satisy box constraints upper range
+        visit_times = []
+        for e in output_str.split("\n"):
+        try:
+            float_val = int(e)
+        except ValueError:
+            float_val = 0
+        visit_times.append(min(float_val,self.box_constraint_range[1]))
+
+        visit_times = visit_times[:self.num_points]
+        box_violation = self.compute_box_violation(visit_times)
+        total_cost = self.compute_total_wait_time(visit_times)
+
+        return LineSchedulingSolution({"total_cost": total_cost, "total_box_violation": total_box_violation, "visit_times": visit_times})
+
