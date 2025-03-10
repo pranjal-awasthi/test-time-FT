@@ -68,7 +68,8 @@ Run the setup script to create a virtual environment and install dependencies:
 1. After setting up the environment, you can edit the config.json file depending on which problem and algorithm you want to run. [View Configuration Documentation](https://pranjal-awasthi.github.io/test-time-FT/config_doc.html) 
 
 2. Run:
-``` python run_experiment.py --config location_of_config_file --seed random_seed
+``` 
+python run_experiment.py --config location_of_config_file --seed random_seed
 ```
 
 The above command will generate a random experiment id and store all the evals in a corresponding directory. To generate the plots run:
