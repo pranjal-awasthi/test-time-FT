@@ -136,17 +136,17 @@
             <tr>
                 <td><code>model_dir</code></td>
                 <td>""</td>
-                <td>Directory where the model files are stored. An empty string indicates that the model will be loaded from the default location or using the HuggingFace library.</td>
+                <td>Directory where the model files are stored. An empty string indicates that the model will be instruction tuned as part of the experiment.</td>
             </tr>
             <tr>
                 <td><code>experiment_dir</code></td>
                 <td>"./"</td>
-                <td>Directory where experiment outputs, logs, and saved models will be stored. The current directory ("./" or "./") is used here.</td>
+                <td>Directory where experiment outputs, logs, will be stored. The current directory ("./" or "./") is used here.</td>
             </tr>
             <tr>
                 <td><code>problem</code></td>
                 <td>"clustering"</td>
-                <td>The optimization problem being solved. The configuration is set up for clustering by default, but also contains parameters for MST and line scheduling.</td>
+                <td>The optimization problem being solved. The configuration is set up for "clustering" by default, but also contains parameters for "mst" and "line_scheduling".</td>
             </tr>
             <tr>
                 <td><code>algorithm</code></td>
@@ -168,22 +168,22 @@
                 <th>Description</th>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>max_length</code></td>
                 <td>1024</td>
-                <td>Maximum sequence length for the tokenizer. This limits how much text can be processed in a single forward pass of the model.</td>
+                <td>Maximum sequence length for the tokenizer.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>max_length</code></td>
                 <td>1024</td>
-                <td>Maximum sequence length for MST problem text representation.</td>
+                <td>Maximum sequence length for the tokenizer.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>max_length</code></td>
                 <td>1024</td>
-                <td>Maximum sequence length for line scheduling problem text representation.</td>
+                <td>Maximum sequence length for the tokenizer.</td>
             </tr>
         </table>
         <a href="#" class="top-link">Back to top</a>
@@ -193,7 +193,7 @@
         <h2>3. Problem Parameters</h2>
         <p>These parameters define the specific characteristics of each optimization problem.</p>
 
-        <h3 id="clustering">3.1 Clustering</h3>
+        <h3 id="clustering">3.1 clustering</h3>
         <p>Clustering involves grouping a set of points so that points in the same group are more similar to each other than to those in other groups.</p>
         <table class="param-table">
             <tr>
@@ -209,7 +209,7 @@
             <tr>
                 <td><code>r</code></td>
                 <td>10</td>
-                <td>Radius parameter that affects the spatial distribution of clusters, potentially determining the maximum distance between points in a cluster.</td>
+                <td>Distances are either 1 or r.</td>
             </tr>
             <tr>
                 <td><code>num_test_points</code></td>
@@ -218,7 +218,7 @@
             </tr>
         </table>
 
-        <h3 id="mst">3.2 Minimum Spanning Tree (MST)</h3>
+        <h3 id="mst">3.2 mst</h3>
         <p>The Minimum Spanning Tree problem aims to find a subset of edges that forms a tree including every vertex, where the total weight of all the edges is minimized.</p>
         <table class="param-table">
             <tr>
@@ -229,27 +229,27 @@
             <tr>
                 <td><code>num_lines</code></td>
                 <td>4</td>
-                <td>Number of lines or paths in the graph structure.</td>
+                <td>Number of horizontal/vertical lines in the grid graph</td>
             </tr>
             <tr>
                 <td><code>prob</code></td>
                 <td>0.4</td>
-                <td>Probability parameter used in graph generation, likely controlling edge density or connection probability.</td>
+                <td>Edge probability.</td>
             </tr>
             <tr>
                 <td><code>deg</code></td>
                 <td>2</td>
-                <td>Degree parameter that may specify the average or maximum vertex degree in the graph.</td>
+                <td>The degree constraint parameter.</td>
             </tr>
             <tr>
                 <td><code>num_test_points</code></td>
                 <td>50</td>
-                <td>Number of test instances to generate for evaluating MST algorithm performance.</td>
+                <td>Number of test instances to generate for evaluating the performance.</td>
             </tr>
         </table>
 
-        <h3 id="line_scheduling">3.3 Line Scheduling</h3>
-        <p>Line scheduling involves organizing tasks or processes in a production line to optimize time and resource usage.</p>
+        <h3 id="line_scheduling">3.3 line_scheduling</h3>
+        <p>Line scheduling involves organizing optimizing visit times to minimize wait time.</p>
         <table class="param-table">
             <tr>
                 <th>Parameter</th>
@@ -259,17 +259,17 @@
             <tr>
                 <td><code>num_points</code></td>
                 <td>10</td>
-                <td>Number of tasks or points to be scheduled in each problem instance.</td>
+                <td>Number of points in each problem instance.</td>
             </tr>
             <tr>
                 <td><code>travel_time_range</code></td>
                 <td>[1, 20]</td>
-                <td>Range of possible travel times between tasks, specified as [minimum, maximum].</td>
+                <td>Range of possible travel times.</td>
             </tr>
             <tr>
                 <td><code>box_constraint_range</code></td>
                 <td>[1, 20]</td>
-                <td>Range of possible constraints for scheduling boxes, likely defining resource limitations or time windows.</td>
+                <td>Range of possible visit time constraints.</td>
             </tr>
             <tr>
                 <td><code>num_test_points</code></td>
@@ -282,9 +282,9 @@
 
     <div class="card it-section" id="it_params">
         <h2>4. Iteration Parameters</h2>
-        <p>These parameters control the training and iteration process for each problem type.</p>
+        <p>These parameters control the initial instruction tuning of the base model.</p>
 
-        <h3>Clustering</h3>
+        <h3>clustering</h3>
         <table class="param-table">
             <tr>
                 <th>Parameter</th>
@@ -304,7 +304,7 @@
             <tr>
                 <td><code>num_samples</code></td>
                 <td>1024</td>
-                <td>Number of samples to generate during training or evaluation.</td>
+                <td>Number of samples to generate during training.</td>
             </tr>
             <tr>
                 <td><code>batch_size</code></td>
@@ -314,11 +314,11 @@
             <tr>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
-                <td>Step size used for updating model weights during optimization (0.00002).</td>
+                <td>Step size used for updating model weights during optimization.</td>
             </tr>
         </table>
 
-        <h3>MST</h3>
+        <h3>mst</h3>
         <table class="param-table">
             <tr>
                 <th>Parameter</th>
@@ -328,31 +328,31 @@
             <tr>
                 <td><code>epochs</code></td>
                 <td>3</td>
-                <td>Number of training epochs for MST problem.</td>
+                <td>Number of training epochs for the mst problem.</td>
             </tr>
             <tr>
                 <td><code>max_length</code></td>
                 <td>1024</td>
-                <td>Maximum sequence length for MST problem.</td>
+                <td>Maximum sequence length for the mst problem.</td>
             </tr>
             <tr>
                 <td><code>num_samples</code></td>
                 <td>1024</td>
-                <td>Number of samples for MST problem training or evaluation.</td>
+                <td>Number of samples for the mst problem during training.</td>
             </tr>
             <tr>
                 <td><code>batch_size</code></td>
                 <td>2</td>
-                <td>Batch size for MST training.</td>
+                <td>Batch size for mst training.</td>
             </tr>
             <tr>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
-                <td>Learning rate for MST training (0.00002).</td>
+                <td>Learning rate for mst training.</td>
             </tr>
         </table>
 
-        <h3>Line Scheduling</h3>
+        <h3>line_scheduling</h3>
         <table class="param-table">
             <tr>
                 <th>Parameter</th>
@@ -367,7 +367,7 @@
             <tr>
                 <td><code>num_samples</code></td>
                 <td>2000</td>
-                <td>Number of samples for line scheduling - note this is higher than other problems (2000 vs 1024).</td>
+                <td>Number of training samples for line scheduling.</td>
             </tr>
             <tr>
                 <td><code>max_length</code></td>
@@ -382,7 +382,7 @@
             <tr>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
-                <td>Learning rate for line scheduling training (0.00002).</td>
+                <td>Learning rate for line scheduling training.</td>
             </tr>
         </table>
         <a href="#" class="top-link">Back to top</a>
@@ -392,8 +392,8 @@
         <h2>5. Algorithm Parameters</h2>
         <p>These parameters control the behavior of different optimization algorithms implemented in the system.</p>
 
-        <h3 id="best_of_llm">5.1 Best of LLM</h3>
-        <p>This algorithm generates multiple solutions using a language model and selects the best one.</p>
+        <h3 id="best_of_llm">5.1 best_of_llm</h3>
+        <p>This algorithm generates multiple solutions using a language model and selects the best one according to the algorithm's objective.</p>
         <table class="param-table">
             <tr>
                 <th>Problem</th>
@@ -402,27 +402,27 @@
                 <th>Description</th>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>num_to_sample</code></td>
                 <td>1920</td>
                 <td>Number of candidate solutions to sample from the language model.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>num_to_sample</code></td>
                 <td>600</td>
-                <td>Number of candidate solutions to sample for MST problem.</td>
+                <td>Number of candidate solutions to sample for the mst problem.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>num_to_sample</code></td>
                 <td>384</td>
                 <td>Number of candidate solutions to sample for line scheduling problem.</td>
             </tr>
         </table>
 
-        <h3 id="best_of_alg">5.2 Best of Algorithm</h3>
-        <p>This algorithm appears to run a classical optimization algorithm multiple times and select the best result.</p>
+        <h3 id="best_of_alg">5.2 best_of_alg</h3>
+        <p>Sample multiple samples from the feasible polytope and and select the best result according to the LLM's log probability.</p>
         <table class="param-table">
             <tr>
                 <th>Problem</th>
@@ -431,27 +431,27 @@
                 <th>Description</th>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>num_to_sample</code></td>
                 <td>1920</td>
                 <td>Number of algorithm runs or samples to generate for clustering.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>num_to_sample</code></td>
                 <td>600</td>
                 <td>Number of algorithm runs or samples to generate for MST problem.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>num_to_sample</code></td>
                 <td>384</td>
                 <td>Number of algorithm runs or samples to generate for line scheduling problem.</td>
             </tr>
         </table>
 
-        <h3 id="top_ift">5.3 Top IFT</h3>
-        <p>This appears to be an Iterative Fine-Tuning approach that identifies and leverages the top-performing solutions.</p>
+        <h3 id="top_ift">5.3 top_ift</h3>
+        <p>Iterated Fine Tuning.</p>
         <table class="param-table">
             <tr>
                 <th>Problem</th>
@@ -460,109 +460,109 @@
                 <th>Description</th>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>m</code></td>
                 <td>4</td>
-                <td>Likely a minimum threshold parameter for the algorithm.</td>
+                <td>Number of samples to finetune on during each inner iteration.</td>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>M</code></td>
                 <td>40</td>
-                <td>Likely a maximum threshold parameter for the algorithm.</td>
+                <td>In total m*M samples are sampled during each iteration.</td>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>Q</code></td>
                 <td>12</td>
-                <td>May represent a quota or quality parameter in the algorithm.</td>
+                <td>Total number of iterations.</td>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>batch_size</code></td>
                 <td>2</td>
                 <td>Number of examples processed in each batch during fine-tuning.</td>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>epochs</code></td>
                 <td>3</td>
                 <td>Number of epochs for fine-tuning in the Top IFT algorithm.</td>
             </tr>
             <tr>
-                <td>Clustering</td>
+                <td>clustering</td>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
-                <td>Learning rate for fine-tuning in Top IFT (0.00002).</td>
+                <td>Learning rate for fine-tuning in Top IFT.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>m</code></td>
                 <td>4</td>
-                <td>Minimum threshold parameter for MST problem.</td>
+                <td>Number of samples to finetune on during each inner iteration.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>M</code></td>
                 <td>50</td>
-                <td>Maximum threshold parameter for MST problem, higher than clustering (50 vs 40).</td>
+                <td>In total m*M samples are sampled during each iteration.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>Q</code></td>
                 <td>3</td>
-                <td>Quota parameter for MST, lower than clustering (3 vs 12).</td>
+                <td>Total number of iterations.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>batch_size</code></td>
                 <td>2</td>
                 <td>Batch size for MST fine-tuning.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>epochs</code></td>
                 <td>3</td>
                 <td>Number of epochs for MST fine-tuning.</td>
             </tr>
             <tr>
-                <td>MST</td>
+                <td>mst</td>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
                 <td>Learning rate for MST fine-tuning (0.00002).</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>m</code></td>
                 <td>4</td>
-                <td>Minimum threshold parameter for line scheduling.</td>
+                <td>Number of samples to finetune on during each inner iteration.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>M</code></td>
                 <td>40</td>
-                <td>Maximum threshold parameter for line scheduling.</td>
+                <td>In total m*M samples are sampled in each iteration.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>Q</code></td>
                 <td>12</td>
-                <td>Quota parameter for line scheduling.</td>
+                <td>Total number of iterations.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>batch_size</code></td>
                 <td>2</td>
                 <td>Batch size for line scheduling fine-tuning.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>epochs</code></td>
                 <td>3</td>
                 <td>Number of epochs for line scheduling fine-tuning.</td>
             </tr>
             <tr>
-                <td>Line Scheduling</td>
+                <td>line_scheduling</td>
                 <td><code>learning_rate</code></td>
                 <td>2e-5</td>
                 <td>Learning rate for line scheduling fine-tuning (0.00002).</td>
