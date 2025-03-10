@@ -67,12 +67,6 @@ Run the setup script to create a virtual environment and install dependencies:
 
 <!-- Add usage instructions here -->
 
-## Features
-
-<!-- List key features of your project -->
-- Feature 1
-- Feature 2
-- Feature 3
 
 ## Contributing
 
