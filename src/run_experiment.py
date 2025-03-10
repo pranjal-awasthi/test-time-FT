@@ -35,6 +35,7 @@ def main():
     # generate random experiment id
     characters = string.digits
     experiment_id  = ''.join(random.choice(characters) for _ in range(6))
+    print(f"Experiment id: {experiment_id}")
 
     if not args.config:
         print("You must specify a config file.")
