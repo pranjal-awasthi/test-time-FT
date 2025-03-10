@@ -76,6 +76,7 @@ def main():
 
                     plot_rect(x_vals[0], x_vals[1], e_vals[0], e_vals[1], color_list[color_index], alg)
                     color_index += 1
+                    color_index %= 6
 
             plot_show()
 
